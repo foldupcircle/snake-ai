@@ -14,6 +14,8 @@ class Agent:
         self.epsilon = 0 # for randomness
         self.gamma = 0 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft() if it reaches the max memory
+        self.model = None
+        self.trainer = None
         # TODO: model, trainer
 
 
@@ -29,20 +31,69 @@ class Agent:
         up = game.direction == Direction.UP
         down = game.direction == Direction.DOWN
 
-        # TODO: write the state to be returned
+        state = [
+            # Danger Straight
+            (left and game.is_collision(left_pt)) or
+            (right and game.is_collision(right_pt)) or
+            (up and game.is_collision(up_pt)) or
+            (down and game.is_collision(down_pt)),
 
+            # Danger Right
+            (left and game.is_collision(up_pt)) or
+            (right and game.is_collision(down_pt)) or
+            (up and game.is_collision(right_pt)) or
+            (down and game.is_collision(left_pt)),
+
+            # Danger Left
+            (left and game.is_collision(down_pt)) or
+            (right and game.is_collision(up_pt)) or
+            (up and game.is_collision(left_pt)) or
+            (down and game.is_collision(right_pt)),
+
+            # Direction
+            left, 
+            right,
+            up,
+            down,
+
+            # Food location
+            game.food.x < game.head.x, # Food Left
+            game.food.x > game.head.x, # Food Right
+            game.food.y < game.head.y, # Food Up
+            game.food.y > game.head.y, # Food Down
+        ]
+
+        return np.array(state, dtype=int)
 
     def remember(self, state, action, reward, next_state, game_over):
-        pass
+        self.memory.append((state, action, reward, next_state, game_over))
 
     def train_long_memory(self):
-        pass
+        if len(self.memory) > BATCH_SIZE:
+            sample = random.sample(self.memory, BATCH_SIZE) # returns list of tuples
+        else:
+            sample = self.memory
+        states, actions, rewards, next_states, game_overs = zip(*sample)
+        
+        self.trainer.train_step(states, actions, rewards, next_states, game_overs)
 
     def train_short_memory(self, state, action, reward, next_state, game_over):
-        pass
+        self.trainer.train_step(state, action, reward, next_state, game_over)
 
     def get_action(self, state):
-        pass
+        # do random move or predicted move: tradeoff b/w exploration and exploitation in deep learning
+        self.epsilon = 80 - self.num_games
+        move = [0, 0, 0]
+        if random.randint(0, 200) < self.epsilon:
+            dir = random.randint(0, 2)
+            move[dir] = 1
+        else:
+            tensor_state = torch.tensor(state, dtype=torch.float)
+            prediction = self.model.predict(tensor_state)
+            dir = torch.argmax(prediction).item()
+            move[dir] = 1
+
+        return move
 
 
 def train():
