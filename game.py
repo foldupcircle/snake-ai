@@ -73,7 +73,6 @@ class SnakeGameAI:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-
         
         # 2. move
         self._move(action) # update the head
@@ -137,9 +136,9 @@ class SnakeGameAI:
         if np.array_equal(action, [1, 0, 0]):
             new_dir = direction_circle[index]
         elif np.array_equal(action, [0, 1, 0]):
-            new_dir = index + 1 if index != 3 else 0
+            new_dir = direction_circle[(index + 1) % 4]
         elif np.array_equal(action, [0, 0, 1]):
-            new_dir = index - 1 if index != 0 else 3
+            new_dir = direction_circle[(index - 1) % 4]
         self.direction = new_dir
 
         x = self.head.x
