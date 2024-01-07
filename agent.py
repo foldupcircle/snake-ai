@@ -19,7 +19,6 @@ class Agent:
         self.memory = deque(maxlen=MAX_MEMORY) # popleft() if it reaches the max memory
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = QTrainer(self.model, LEARNING_RATE, self.gamma)
-        # TODO: model, trainer
 
 
     def get_state(self, game: SnakeGameAI):
