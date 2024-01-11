@@ -7,13 +7,6 @@ import numpy as np
 
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
-#font = pygame.font.SysFont('arial', 25)
-
-# reset - agent should be able to reset the game
-# reward - implement what the reward is that our agent gets
-# play(action) -> direction
-# game_iteration 
-# is_coll
 
 class Direction(Enum):
     RIGHT = 1
@@ -28,7 +21,8 @@ WHITE = (255, 255, 255)
 RED = (200,0,0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
-BLACK = (0,0,0)
+BLACK = (0, 0, 0)
+GRAY = (255, 255, 240)
 
 BLOCK_SIZE = 20
 SPEED = 20
@@ -57,12 +51,35 @@ class SnakeGameAI:
         self.food = None
         self._place_food()
         self.frame_iteration = 0
+        self.obstacles = []
+        
+    def add_obstacles(self, num_obstacles=0):
+        obstacles_added = 0
+        while obstacles_added != num_obstacles:
+            x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
+            y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
+            if self._space_avail(x, y):
+                obstacles_added += 1
+                self.obstacles.append(Point(x, y))
+
+
+    def _space_avail(self, x, y):
+        if self.food.x == x and self.food.y == y:
+            return False
+
+        for s in self.snake:
+            if s.x == x and s.y == y:
+                return False
+        
+        return True
         
     def _place_food(self):
         x = random.randint(0, (self.w-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE 
         y = random.randint(0, (self.h-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
         self.food = Point(x, y)
         if self.food in self.snake:
+            self.obstacles = []
+            self.add_obstacles( 3 )
             self._place_food()
         
     def play_step(self, action):
@@ -113,17 +130,28 @@ class SnakeGameAI:
         if pt in self.snake[1:]:
             return True
         
+        # hits obstacle
+        if pt in self.obstacles:
+            return True
+        
         return False
         
     def _update_ui(self):
         self.display.fill(BLACK)
         
+        # add all the snake blocks
         for pt in self.snake:
             pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
-            
+            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x + 4, pt.y + 4, 12, 12))
+
+        # add the food blocks
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
         
+        # add obstacles
+        for ob in self.obstacles:
+            print("HEY")
+            pygame.draw.rect(self.display, GRAY, pygame.Rect(ob.x, ob.y, BLOCK_SIZE, BLOCK_SIZE))
+
         text = font.render("Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
