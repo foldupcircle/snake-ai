@@ -15,7 +15,7 @@ class Linear_QNet(nn.Module):
         x = self.linear2(x) # why not relu here?
         return x
 
-    def save(self, file_name='model.pth'): # saving whatever model we have into our folders
+    def save(self, file_name='model_obstacles1.pth'): # saving whatever model we have into our folders
         model_folder_path = './model'
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)

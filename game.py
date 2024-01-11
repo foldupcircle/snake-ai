@@ -22,7 +22,7 @@ RED = (200,0,0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
-GRAY = (255, 255, 240)
+GRAY = (128, 128, 128)
 
 BLOCK_SIZE = 20
 SPEED = 20
@@ -74,12 +74,12 @@ class SnakeGameAI:
         return True
         
     def _place_food(self):
-        x = random.randint(0, (self.w-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE 
-        y = random.randint(0, (self.h-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
+        x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE ) * BLOCK_SIZE 
+        y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE ) * BLOCK_SIZE
         self.food = Point(x, y)
+        self.obstacles = []
+        self.add_obstacles( min(15, self.score // 3) )
         if self.food in self.snake:
-            self.obstacles = []
-            self.add_obstacles( 3 )
             self._place_food()
         
     def play_step(self, action):
@@ -149,7 +149,6 @@ class SnakeGameAI:
         
         # add obstacles
         for ob in self.obstacles:
-            print("HEY")
             pygame.draw.rect(self.display, GRAY, pygame.Rect(ob.x, ob.y, BLOCK_SIZE, BLOCK_SIZE))
 
         text = font.render("Score: " + str(self.score), True, WHITE)
