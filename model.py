@@ -55,7 +55,7 @@ class QTrainer:
             target[i][torch.argmax(action).item()] = Q_new # I don't understand the torch.argmax part
 
         self.optim.zero_grad() # why do we have to do this?
-        loss = self.criterion(target, pred) # what does MSEloss return
+        loss = self.criterion(target, pred) # what does MSEloss return - this returns the mean squared loss
         loss.backward() # how does back_prop work exactly?
 
         self.optim.step() # stepping with the optimizer? Maybe like mpc, look into how this works
