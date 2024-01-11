@@ -1,4 +1,5 @@
 from hashlib import new
+from turtle import right
 import pygame
 import random
 from enum import Enum
@@ -43,9 +44,11 @@ class SnakeGameAI:
         self.direction = Direction.RIGHT
         
         self.head = Point(self.w/2, self.h/2)
-        self.snake = [self.head, 
-                      Point(self.head.x-BLOCK_SIZE, self.head.y),
-                      Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
+        self.snake = [
+            self.head, 
+            Point(self.head.x - BLOCK_SIZE, self.head.y),
+            Point(self.head.x - (2 * BLOCK_SIZE), self.head.y)
+        ]
         
         self.score = 0
         self.food = None
@@ -53,6 +56,58 @@ class SnakeGameAI:
         self.frame_iteration = 0
         self.obstacles = []
         
+    def find_obstacles(self):
+        head = self.snake[0]
+
+        # straight
+        temp_pt = Point(head.x, head.y)
+        straight_count = 0
+        while not self.is_collision(temp_pt):
+            straight_count += 1
+            new_x, new_y = self._next_pt_in_direction(temp_pt.x, temp_pt.y, 'straight')
+            temp_pt = Point(new_x, new_y)
+
+        # left
+        temp_pt = Point(head.x, head.y)
+        left_count = 0
+        while not self.is_collision(temp_pt):
+            left_count += 1
+            new_x, new_y = self._next_pt_in_direction(temp_pt.x, temp_pt.y, 'left')
+            temp_pt = Point(new_x, new_y)
+
+        # right
+        temp_pt = Point(head.x, head.y)
+        right_count = 0
+        while not self.is_collision(temp_pt):
+            right_count += 1
+            new_x, new_y = self._next_pt_in_direction(temp_pt.x, temp_pt.y, 'right')
+            temp_pt = Point(new_x, new_y)
+        
+        
+
+        return straight_count, left_count, right_count
+        
+    def _next_pt_in_direction(self, x, y, direction: str):
+        direction_circle = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+        index = direction_circle.index(self.direction)
+        if direction == 'straight':
+            new_dir = direction_circle[index % 4]
+        elif direction == 'right':
+            new_dir = direction_circle[(index + 1) % 4]
+        elif direction == 'left':
+            new_dir = direction_circle[(index - 1) % 4]
+
+        if new_dir == Direction.LEFT:
+            x -= 20
+        elif new_dir == Direction.RIGHT:
+            x += 20
+        elif new_dir == Direction.UP:
+            y -= 20
+        elif new_dir == Direction.DOWN:
+            y += 20
+        
+        return x, y
+
     def add_obstacles(self, num_obstacles=0):
         obstacles_added = 0
         while obstacles_added != num_obstacles:
