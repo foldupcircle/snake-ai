@@ -1,7 +1,6 @@
 import os
 from game import SnakeGameAI
 from agent import Agent
-from helper import plot
 import torch
 import os
 
