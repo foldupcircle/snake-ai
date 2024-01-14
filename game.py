@@ -1,4 +1,5 @@
 from hashlib import new
+from turtle import right
 import pygame
 import random
 from enum import Enum
@@ -7,13 +8,6 @@ import numpy as np
 
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
-#font = pygame.font.SysFont('arial', 25)
-
-# reset - agent should be able to reset the game
-# reward - implement what the reward is that our agent gets
-# play(action) -> direction
-# game_iteration 
-# is_coll
 
 class Direction(Enum):
     RIGHT = 1
@@ -28,7 +22,8 @@ WHITE = (255, 255, 255)
 RED = (200,0,0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
-BLACK = (0,0,0)
+BLACK = (0, 0, 0)
+GRAY = (128, 128, 128)
 
 BLOCK_SIZE = 20
 SPEED = 20
@@ -44,28 +39,107 @@ class SnakeGameAI:
         self.clock = pygame.time.Clock()
         self.reset()
     
-    def reset(self):
+    def reset(self, level=0):
         # init game state
         self.direction = Direction.RIGHT
         
         self.head = Point(self.w/2, self.h/2)
-        self.snake = [self.head, 
-                      Point(self.head.x-BLOCK_SIZE, self.head.y),
-                      Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
+        self.snake = [
+            self.head, 
+            Point(self.head.x - BLOCK_SIZE, self.head.y),
+            Point(self.head.x - (2 * BLOCK_SIZE), self.head.y)
+        ]
         
         self.score = 0
         self.food = None
-        self._place_food()
+        self._place_food(level)
         self.frame_iteration = 0
+        self.obstacles = []
         
-    def _place_food(self):
-        x = random.randint(0, (self.w-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE 
-        y = random.randint(0, (self.h-BLOCK_SIZE )//BLOCK_SIZE )*BLOCK_SIZE
+    def find_obstacles(self):
+        head = self.snake[0]
+
+        # straight
+        temp_pt = Point(head.x, head.y)
+        straight_count = 0
+        while not self.is_collision(temp_pt):
+            straight_count += 1
+            new_x, new_y = self._next_pt_in_direction(temp_pt.x, temp_pt.y, 'straight')
+            temp_pt = Point(new_x, new_y)
+
+        # left
+        temp_pt = Point(head.x, head.y)
+        left_count = 0
+        while not self.is_collision(temp_pt):
+            left_count += 1
+            new_x, new_y = self._next_pt_in_direction(temp_pt.x, temp_pt.y, 'left')
+            temp_pt = Point(new_x, new_y)
+
+        # right
+        temp_pt = Point(head.x, head.y)
+        right_count = 0
+        while not self.is_collision(temp_pt):
+            right_count += 1
+            new_x, new_y = self._next_pt_in_direction(temp_pt.x, temp_pt.y, 'right')
+            temp_pt = Point(new_x, new_y)
+
+        return straight_count, left_count, right_count
+        
+    def _next_pt_in_direction(self, x, y, direction: str):
+        direction_circle = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+        index = direction_circle.index(self.direction)
+        if direction == 'straight':
+            new_dir = direction_circle[index % 4]
+        elif direction == 'right':
+            new_dir = direction_circle[(index + 1) % 4]
+        elif direction == 'left':
+            new_dir = direction_circle[(index - 1) % 4]
+
+        if new_dir == Direction.LEFT:
+            x -= 20
+        elif new_dir == Direction.RIGHT:
+            x += 20
+        elif new_dir == Direction.UP:
+            y -= 20
+        elif new_dir == Direction.DOWN:
+            y += 20
+        
+        return x, y
+
+    def _add_obstacles(self, num_obstacles=0):
+        obstacles_added = 0
+        while obstacles_added != num_obstacles:
+            x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
+            y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
+            if self._space_avail(x, y):
+                obstacles_added += 1
+                self.obstacles.append(Point(x, y))
+
+
+    def _space_avail(self, x, y):
+        if self.food.x == x and self.food.y == y:
+            return False
+
+        for s in self.snake:
+            if s.x == x and s.y == y:
+                return False
+        
+        return True
+        
+    def _place_food(self, level):
+        if level == 0:
+            num_obstacles = self.score // 3
+        else:
+            num_obstacles = (level - 1) * 5
+        x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE ) * BLOCK_SIZE 
+        y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE ) * BLOCK_SIZE
         self.food = Point(x, y)
+        self.obstacles = []
+        self._add_obstacles(num_obstacles)
         if self.food in self.snake:
-            self._place_food()
+            self._place_food(level)
         
-    def play_step(self, action):
+    def play_step(self, action, level=0):
         self.frame_iteration += 1
 
         # 1. collect user input
@@ -90,7 +164,7 @@ class SnakeGameAI:
         if self.head == self.food:
             self.score += 1
             reward = 10
-            self._place_food()
+            self._place_food(level)
         else:
             self.snake.pop()
         
@@ -113,17 +187,27 @@ class SnakeGameAI:
         if pt in self.snake[1:]:
             return True
         
+        # hits obstacle
+        if pt in self.obstacles:
+            return True
+        
         return False
         
     def _update_ui(self):
         self.display.fill(BLACK)
         
+        # add all the snake blocks
         for pt in self.snake:
             pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
-            
+            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x + 4, pt.y + 4, 12, 12))
+
+        # add the food blocks
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
         
+        # add obstacles
+        for ob in self.obstacles:
+            pygame.draw.rect(self.display, GRAY, pygame.Rect(ob.x, ob.y, BLOCK_SIZE, BLOCK_SIZE))
+
         text = font.render("Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()

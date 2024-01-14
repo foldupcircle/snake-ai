@@ -1,8 +1,7 @@
-from statistics import mean
 import torch
 import random
 import numpy as np
-from game import SnakeGameAI, Direction, Point
+from game import BLOCK_SIZE, SnakeGameAI, Direction, Point
 from collections import deque
 from model import Linear_QNet, QTrainer
 from helper import plot
@@ -17,21 +16,32 @@ class Agent:
         self.epsilon = 0 # for randomness
         self.gamma = 0.9 # discount rate --> play around with this value (< 1)
         self.memory = deque(maxlen=MAX_MEMORY) # popleft() if it reaches the max memory
-        self.model = Linear_QNet(11, 256, 3)
+        self.model = Linear_QNet(14, 256, 3)
         self.trainer = QTrainer(self.model, LEARNING_RATE, self.gamma)
 
 
     def get_state(self, game: SnakeGameAI):
         head = game.snake[0]
-        left_pt = Point(head.x - 20, head.y)
-        right_pt = Point(head.x + 20, head.y)
-        up_pt = Point(head.x, head.y - 20)
-        down_pt = Point(head.x, head.y + 20)
+        left_pt = Point(head.x - BLOCK_SIZE, head.y)
+        right_pt = Point(head.x + BLOCK_SIZE, head.y)
+        up_pt = Point(head.x, head.y - BLOCK_SIZE)
+        down_pt = Point(head.x, head.y + BLOCK_SIZE)
 
         left = game.direction == Direction.LEFT
         right = game.direction == Direction.RIGHT
         up = game.direction == Direction.UP
         down = game.direction == Direction.DOWN
+
+        obstacle_straight, obstacle_left, obstacle_right = game.find_obstacles()
+
+        if game.direction == Direction.LEFT or game.direction == Direction.RIGHT:
+            obstacle_straight = round(obstacle_straight * BLOCK_SIZE / game.w, 3)
+            obstacle_left = round(obstacle_left * BLOCK_SIZE / game.h, 3)
+            obstacle_right = round(obstacle_right * BLOCK_SIZE / game.h, 3)
+        elif game.direction == Direction.UP or game.direction == Direction.DOWN:
+            obstacle_straight = round(obstacle_straight * BLOCK_SIZE / game.h, 3)
+            obstacle_left = round(obstacle_left * BLOCK_SIZE / game.w, 3)
+            obstacle_right = round(obstacle_right * BLOCK_SIZE / game.w, 3)
 
         state = [
             # Danger Straight
@@ -63,6 +73,11 @@ class Agent:
             game.food.x > game.head.x, # Food Right
             game.food.y < game.head.y, # Food Up
             game.food.y > game.head.y, # Food Down
+
+            # Space till obstacle
+            obstacle_straight,
+            obstacle_left,
+            obstacle_right
         ]
 
         return np.array(state, dtype=int)
