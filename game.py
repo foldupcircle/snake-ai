@@ -39,7 +39,7 @@ class SnakeGameAI:
         self.clock = pygame.time.Clock()
         self.reset()
     
-    def reset(self):
+    def reset(self, level=0):
         # init game state
         self.direction = Direction.RIGHT
         
@@ -52,7 +52,7 @@ class SnakeGameAI:
         
         self.score = 0
         self.food = None
-        self._place_food()
+        self._place_food(level)
         self.frame_iteration = 0
         self.obstacles = []
         
@@ -82,8 +82,6 @@ class SnakeGameAI:
             right_count += 1
             new_x, new_y = self._next_pt_in_direction(temp_pt.x, temp_pt.y, 'right')
             temp_pt = Point(new_x, new_y)
-        
-        
 
         return straight_count, left_count, right_count
         
@@ -108,7 +106,7 @@ class SnakeGameAI:
         
         return x, y
 
-    def add_obstacles(self, num_obstacles=0):
+    def _add_obstacles(self, num_obstacles=0):
         obstacles_added = 0
         while obstacles_added != num_obstacles:
             x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
@@ -128,16 +126,20 @@ class SnakeGameAI:
         
         return True
         
-    def _place_food(self):
+    def _place_food(self, level):
+        if level == 0:
+            num_obstacles = self.score // 3
+        else:
+            num_obstacles = (level - 1) * 5
         x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE ) * BLOCK_SIZE 
         y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE ) * BLOCK_SIZE
         self.food = Point(x, y)
         self.obstacles = []
-        self.add_obstacles( min(15, self.score // 3) )
+        self._add_obstacles(num_obstacles)
         if self.food in self.snake:
-            self._place_food()
+            self._place_food(level)
         
-    def play_step(self, action):
+    def play_step(self, action, level=0):
         self.frame_iteration += 1
 
         # 1. collect user input
@@ -162,7 +164,7 @@ class SnakeGameAI:
         if self.head == self.food:
             self.score += 1
             reward = 10
-            self._place_food()
+            self._place_food(level)
         else:
             self.snake.pop()
         
