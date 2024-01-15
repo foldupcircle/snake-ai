@@ -6,7 +6,7 @@ class PowerupType(Enum):
     X2 = 3
 
 class Powerup():
-    def __init__(self, type, p=0.1, max_powerups=2, obstacle_runs) -> None:
+    def __init__(self, type, p=0.1, max_powerups=2, obstacle_runs=5) -> None:
         '''
         Inputs:
         - type: one of PowerupType class
@@ -28,13 +28,14 @@ class Powerup():
         - game: from game.py, so we can get game.w and game.h to place the powerup randomly
         '''
         pass
-    def powerup_acquired(self, game):
+    def powerup_playstep(self, game, ):
         '''
         Handles the neccesary adjustments in the game when a powerup is acquired
 
         Inputs: 
         - game: Make adjustments to game.lives, game.score_multiplier, or game.obstacle_powerup
         '''
+        
         if self.type == PowerupType.NO_OBSTACLE:
             game.obstacle_powerup = self.obstacle_runs
         elif self.type == PowerupType.LIFE:

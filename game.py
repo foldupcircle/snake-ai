@@ -53,6 +53,9 @@ class SnakeGameAI:
         self._place_food(level)
         self.frame_iteration = 0
         self.obstacles = []
+        self.lives = 0
+        self.obstacle_powerup = 0
+        self.score_multiplier = 0
         
     def find_obstacles(self):
         head = self.snake[0]
@@ -94,13 +97,13 @@ class SnakeGameAI:
             new_dir = direction_circle[(index - 1) % 4]
 
         if new_dir == Direction.LEFT:
-            x -= 20
+            x -= BLOCK_SIZE
         elif new_dir == Direction.RIGHT:
-            x += 20
+            x += BLOCK_SIZE
         elif new_dir == Direction.UP:
-            y -= 20
+            y -= BLOCK_SIZE
         elif new_dir == Direction.DOWN:
-            y += 20
+            y += BLOCK_SIZE
         
         return x, y
 
@@ -115,6 +118,14 @@ class SnakeGameAI:
 
 
     def _space_avail(self, x, y):
+        '''
+        Private function to check if the given space is available (no snake or food already there)
+
+        Inputs:
+        - x: x coordinate of requested location
+        - y: y coordinate of requested location
+        '''
+
         if self.food.x == x and self.food.y == y:
             return False
 
@@ -125,6 +136,12 @@ class SnakeGameAI:
         return True
         
     def _place_food(self, level):
+        '''
+        Private function to place the food and obstacles
+
+        Inputs: 
+        - level: the level is used to determine how many obstacles there will be
+        '''
         if level == 0:
             num_obstacles = self.score // 3
         else:
@@ -206,7 +223,7 @@ class SnakeGameAI:
         for ob in self.obstacles:
             pygame.draw.rect(self.display, GRAY, pygame.Rect(ob.x, ob.y, BLOCK_SIZE, BLOCK_SIZE))
 
-        text = font.render("Score: " + str(self.score), True, WHITE)
+        text = font.render('Score: ' + str(self.score) + ', Lives: ' + str(self.lives), True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
         
