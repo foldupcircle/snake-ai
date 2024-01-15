@@ -1,5 +1,3 @@
-from hashlib import new
-from turtle import right
 import pygame
 import random
 from enum import Enum
