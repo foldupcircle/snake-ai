@@ -5,6 +5,10 @@ import torch
 import os
 
 def test(level=1):
+    '''
+    Tests the snake with the option for the user to select levels.
+    Difficulty is easiest in Level 1 where there is no obstacles to the hardest in Level 5 (20 obstacles)
+    '''
     agent = Agent()
     game = SnakeGameAI()
     file_path = os.path.join('./model', 'model_obstacles2.pth')

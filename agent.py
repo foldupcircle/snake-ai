@@ -6,6 +6,7 @@ from collections import deque
 from model import Linear_QNet, QTrainer
 from helper import plot
 
+# Model Parameters
 MAX_MEMORY = 100000
 BATCH_SIZE = 1000
 LEARNING_RATE = 0.001
@@ -14,13 +15,21 @@ class Agent:
     def __init__(self) -> None:
         self.num_games = 0
         self.epsilon = 0 # for randomness
-        self.gamma = 0.9 # discount rate --> play around with this value (< 1)
+        self.gamma = 0.9 # discount rate => can play around with this value (< 1)
         self.memory = deque(maxlen=MAX_MEMORY) # popleft() if it reaches the max memory
         self.model = Linear_QNet(14, 256, 3)
         self.trainer = QTrainer(self.model, LEARNING_RATE, self.gamma)
 
-
     def get_state(self, game: SnakeGameAI):
+        '''
+        Returns the appropriate state of the snake, which consists of 
+        [
+            Danger Straight, Danger Right, Danger Left, => is there obstacle, snake, or border next to snake head in that direction?
+            left, right, up, down, => Direction snake is going
+            food left, food right, food up, food down, => where food is in relation to the snake head
+            obstacle straight, obstacle left, obstacle right => 'sensors' on how far obstacle is to straight, left, and right
+        ]
+        '''
         head = game.snake[0]
         left_pt = Point(head.x - BLOCK_SIZE, head.y)
         right_pt = Point(head.x + BLOCK_SIZE, head.y)
@@ -83,9 +92,15 @@ class Agent:
         return np.array(state, dtype=int)
 
     def remember(self, state, action, reward, next_state, game_over):
+        '''
+        Store every play_step in self.memory
+        '''
         self.memory.append((state, action, reward, next_state, game_over))
 
     def train_long_memory(self):
+        '''
+        Train memory after run is complete (snake dies) with random sample of BATCH_SIZE
+        '''
         if len(self.memory) > BATCH_SIZE:
             sample = random.sample(self.memory, BATCH_SIZE) # returns list of tuples
         else:
@@ -95,6 +110,9 @@ class Agent:
         self.trainer.train_step(states, actions, rewards, next_states, game_overs)
 
     def train_short_memory(self, state, action, reward, next_state, game_over):
+        '''
+        Train model with each play_step the snake takes (every time the snake moves)
+        '''
         self.trainer.train_step(state, action, reward, next_state, game_over)
 
     def get_action(self, state):
@@ -112,8 +130,16 @@ class Agent:
 
         return move
 
-
 def train():
+    '''
+    Main function for training snake AI. Total 6 Steps:
+    1. Get Old State
+    2. Get the next action
+    3. Apply action to game and get new state of snake
+    4. Train short memory
+    5. Store play_step in memory
+    6. If done, train long memory (based on entire runs), plot, and repeat 
+    '''
     plot_scores = []
     plot_mean_scores = []
     total_score = 0
@@ -152,8 +178,6 @@ def train():
             mean_score = total_score / agent.num_games
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
-
-
 
 if __name__ == '__main__':
     train()
