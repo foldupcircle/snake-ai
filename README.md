@@ -1,5 +1,7 @@
 # Snake AI
 
+![](https://github.com/foldupcircle/snake-ai/blob/main/snake-ai.gif)
+
 ## Key Features
 * Implemented Reinforcement Learning with Pytorch
 * Optimized model by adjusting state and learning rate
