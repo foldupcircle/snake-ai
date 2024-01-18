@@ -16,3 +16,5 @@
 
 ## Training the Model
 To observe how the model is trained, you can run `python agent.py`
+
+* This project is based on the snake AI course from freeCodeCamp, which can be found here: https://www.youtube.com/watch?v=L8ypSXwyBds&t=1236s&ab_channel=freeCodeCamp.org. After going through this course, I've made my own improvements to the project, including obstacles, levels, optimizing the model, and other features. 
