@@ -1,5 +1,3 @@
-from hashlib import new
-from turtle import right
 import pygame
 import random
 from enum import Enum
@@ -33,6 +31,7 @@ class SnakeGameAI:
     def __init__(self, w=640, h=480):
         self.w = w
         self.h = h
+
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
@@ -57,6 +56,10 @@ class SnakeGameAI:
         self.obstacles = []
         
     def find_obstacles(self):
+        '''
+        Calculates how far obstacles are in the straight, left, and right direction based on current snake direction
+        Returns: (straight_count, left_count, right_count) for state
+        '''
         head = self.snake[0]
 
         # straight
@@ -86,6 +89,9 @@ class SnakeGameAI:
         return straight_count, left_count, right_count
         
     def _next_pt_in_direction(self, x, y, direction: str):
+        '''
+        Private function to determine next block/point based on current snake direction and direction argument
+        '''
         direction_circle = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         index = direction_circle.index(self.direction)
         if direction == 'straight':
@@ -96,17 +102,20 @@ class SnakeGameAI:
             new_dir = direction_circle[(index - 1) % 4]
 
         if new_dir == Direction.LEFT:
-            x -= 20
+            x -= BLOCK_SIZE
         elif new_dir == Direction.RIGHT:
-            x += 20
+            x += BLOCK_SIZE
         elif new_dir == Direction.UP:
-            y -= 20
+            y -= BLOCK_SIZE
         elif new_dir == Direction.DOWN:
-            y += 20
+            y += BLOCK_SIZE
         
         return x, y
 
     def _add_obstacles(self, num_obstacles=0):
+        '''
+        Randomly adds num_obstacles amout of obstacles in places the snake and food don't occupy
+        '''
         obstacles_added = 0
         while obstacles_added != num_obstacles:
             x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE 
@@ -115,8 +124,10 @@ class SnakeGameAI:
                 obstacles_added += 1
                 self.obstacles.append(Point(x, y))
 
-
     def _space_avail(self, x, y):
+        '''
+        Helper function to see if there's a snake or food in (x, y) location
+        '''
         if self.food.x == x and self.food.y == y:
             return False
 
@@ -127,6 +138,9 @@ class SnakeGameAI:
         return True
         
     def _place_food(self, level):
+        '''
+        Place food in random location on board
+        '''
         if level == 0:
             num_obstacles = self.score // 3
         else:
@@ -140,6 +154,15 @@ class SnakeGameAI:
             self._place_food(level)
         
     def play_step(self, action, level=0):
+        '''
+        Handles each snake move through the following steps:
+        1. collect user input
+        2. move
+        3. check if game over
+        4. place new food or just move
+        5. update ui and clock
+        6. return game over and score
+        '''
         self.frame_iteration += 1
 
         # 1. collect user input
@@ -213,8 +236,8 @@ class SnakeGameAI:
         pygame.display.flip()
         
     def _move(self, action):
-        # action: [straight, right, left]
 
+        # action: [straight, right, left]
         direction_circle = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         index = direction_circle.index(self.direction)
         if np.array_equal(action, [1, 0, 0]):
@@ -225,6 +248,7 @@ class SnakeGameAI:
             new_dir = direction_circle[(index - 1) % 4]
         self.direction = new_dir
 
+        # Move in correct direction
         x = self.head.x
         y = self.head.y
         if self.direction == Direction.RIGHT:
